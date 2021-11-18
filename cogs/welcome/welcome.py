@@ -164,6 +164,7 @@ class Welcome(commands.Cog):  # pylint: disable=too-many-instance-attributes
                     exc_info=True,
                 )
                 LOGGER.error(errorMsg)
+
                 if guildData[KEY_LOG_JOIN_ENABLED] and not test and channel:
                     await channel.send(
                         f":bangbang: ``Server Welcome:`` User {newUser.mention} "
@@ -171,6 +172,31 @@ class Welcome(commands.Cog):  # pylint: disable=too-many-instance-attributes
                         f"({newUser.id}) has joined. Could not send DM!"
                     )
                     await channel.send(errorMsg)
+
+                doPostFailedDm = guildData[KEY_WELCOME_CHANNEL_SETTINGS][KEY_POST_FAILED_DM]
+                if doPostFailedDm and not test:
+                    infoMsg = (
+                        f"Hey {newUser.mention}, we couldn't reach your DMs.\n"
+                        "The following is what we wanted to send to you."
+                    )
+                    try:
+                        await self.sendToWelcomeChannel(newUser.guild, infoMsg, embed=welcomeEmbed)
+                    except ValueError as errorMsg:
+                        LOGGER.error(
+                            "Could not send messages to the welcome channel! "
+                            "Please make sure welcome channel settings are "
+                            "well configured!",
+                            exc_info=True,
+                        )
+                        LOGGER.error(errorMsg)
+                    except (discord.Forbidden, discord.HTTPException) as errorMsg:
+                        LOGGER.error(
+                            "Could not send message, please make sure the bot "
+                            "has enough permissions to send messages to this "
+                            "channel!",
+                            exc_info=True,
+                        )
+                        LOGGER.error(errorMsg)
             else:
                 if guildData[KEY_LOG_JOIN_ENABLED] and not test and channel:
                     await channel.send(
