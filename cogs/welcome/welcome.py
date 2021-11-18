@@ -62,6 +62,48 @@ class Welcome(commands.Cog):  # pylint: disable=too-many-instance-attributes
             LOGGER.info("Changed guild's welcomeChannelSetFlag to false as channel was deleted")
         return
 
+    async def sendToWelcomeChannel(self, guild: discord.Guild, *args, **kwargs):
+        """
+        Sends a message to the welcome channel of a guild.
+
+        Parameters
+        ----------
+        guild: discord.Guild
+            The guild to send the message to
+        *args:
+            The arguments to pass to the `discord.TextChannel.send()` method
+        **kwargs:
+            Keyword arguments to be passed to the `discord.TextChannel.send()` method
+
+        Returns
+        -------
+        discord.Message
+            The message sent
+
+        Raises
+        ------
+        discord.Forbidden
+            If the bot doesn't have permissions to send messages to the channel
+        discord.HTTPException
+            If the message couldn't be sent
+        discord.InvalidArgument
+            If keyword arguments are invalid
+        """
+
+        welcomeChannelId: int = await self.config.guild(guild).get_attr(KEY_WELCOME_CHANNEL)()
+
+        if welcomeChannelId is None:
+            raise ValueError(f"No welcome channel set for guild {guild.name} ({guild.id}).")
+
+        welcomeChannel: discord.TextChannel = discord.utils.get(
+            guild.text_channels, id=welcomeChannelId
+        )
+
+        if not welcomeChannel:
+            raise ValueError(f"Welcome channel not found for guild {guild.name} ({guild.id})")
+
+        return await welcomeChannel.send(*args, **kwargs)
+
     async def sendWelcomeMessageChannel(self, newUser: discord.Member):
         guild = newUser.guild
         channelID = await self.config.guild(guild).get_attr(KEY_WELCOME_CHANNEL)()
