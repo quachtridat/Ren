@@ -246,6 +246,34 @@ class Welcome(commands.Cog):  # pylint: disable=too-many-instance-attributes
 
         return
 
+    # [p]welcomeset channelset
+    @welcome.group(name="channelconfig", aliases=["channelset", "chconfig", "chset"])
+    @commands.guild_only()
+    async def welcomeChannelConfig(self, ctx: Context):
+        """Manage server welcome channel settings."""
+
+    # [p]welcomeset channelset postfaileddm
+    @welcomeChannelConfig.command(name="postfaileddm", aliases=["faileddm", "togglefaileddm"])
+    @commands.guild_only()
+    async def welcomeChannelConfigPostFailedDm(self, ctx: Context):
+        """Toggle whether to post failed DM's to the welcome channel."""
+
+        doPostFailedDmConfig = (
+            self.config.guild(ctx.guild)
+            .get_attr(KEY_WELCOME_CHANNEL_SETTINGS)
+            .get_attr(KEY_POST_FAILED_DM)
+        )
+
+        doPostFailedDm = await doPostFailedDmConfig()
+        await doPostFailedDmConfig.set(not doPostFailedDm)
+        doPostFailedDm = await doPostFailedDmConfig()
+
+        await ctx.send(
+            info("Failed DM's will now be posted to the welcome channel.")
+            if doPostFailedDm
+            else info("Failed DM's will **not** be posted to the welcome channel.")
+        )
+
     @checks.mod_or_permissions()
     @greetings.command(name="add")
     async def greetAdd(self, ctx: Context, name: str):
