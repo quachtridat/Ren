@@ -46,6 +46,8 @@ class StarboardPages(menus.ListPageSource):
             stars_added=starboard.stars_added,
             selfstar=starboard.selfstar,
         )
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        """
         if starboard.blacklist:
             channels = [guild.get_channel(c) for c in starboard.blacklist]
             roles = [guild.get_role(r) for r in starboard.blacklist]
@@ -64,6 +66,28 @@ class StarboardPages(menus.ListPageSource):
                 msg += _("Allowed Channels: {chans}\n").format(chans=chans)
             if roles_str:
                 msg += _("Allowed roles: {roles}\n").format(roles=roles_str)
+        """
+        if starboard.blacklist_role_ids:
+            roles = [guild.get_role(r) for r in starboard.blacklist_role_ids]
+            if roles:
+                roles_str = humanize_list([r.mention for r in roles if r is not None])
+                msg += _("Blocked roles: {roles}\n").format(roles=roles_str)
+        if starboard.blacklist_channel_ids:
+            channels = [guild.get_channel(c) for c in starboard.blacklist_channel_ids]
+            if channels:
+                channels_str = humanize_list([c.mention for c in channels if c is not None])
+                msg += _("Blocked channels: {channels}\n").format(channels=channels_str)
+        if starboard.whitelist_role_ids:
+            roles = [guild.get_role(r) for r in starboard.whitelist_role_ids]
+            if roles:
+                roles_str = humanize_list([r.mention for r in roles if r is not None])
+                msg += _("Allowed roles: {roles}\n").format(roles=roles_str)
+        if starboard.whitelist_channel_ids:
+            channels = [guild.get_channel(c) for c in starboard.whitelist_channel_ids]
+            if channels:
+                channels_str = humanize_list([c.mention for c in channels if c is not None])
+                msg += _("Allowed channels: {channels}\n").format(channels=channels_str)
+        # temp-fix end
         count = 0
         embed.description = ""
         for page in pagify(msg, page_length=1024):

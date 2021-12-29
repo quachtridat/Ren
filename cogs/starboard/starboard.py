@@ -176,6 +176,10 @@ class Starboard(StarboardEvents, commands.Cog):
             return
         channels = 0
         boards = 0
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        removed_role_count = 0
+        removed_channel_count = 0
+        # temp-fix end
         for name, starboard in self.starboards[guild.id].items():
             channel = guild.get_channel(starboard.channel)
             if channel is None:
@@ -196,7 +200,44 @@ class Starboard(StarboardEvents, commands.Cog):
                     if channel is None and role is None:
                         self.starboards[guild.id][name].whitelist.remove(c)
                         channels += 1
+            # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+            if starboard.blacklist_role_ids:
+                for role_id in starboard.blacklist_role_ids:
+                    role = guild.get_role(role_id)
+                    if role is None:
+                        self.starboards[guild.id][name].blacklist_role_ids.remove(role_id)
+                        removed_role_count += 1
+            if starboard.whitelist_role_ids:
+                for role_id in starboard.whitelist_role_ids:
+                    role = guild.get_role(role_id)
+                    if role is None:
+                        self.starboards[guild.id][name].whitelist_role_ids.remove(role_id)
+                        removed_role_count += 1
+            if starboard.blacklist_channel_ids:
+                for channel_id in starboard.blacklist_channel_ids:
+                    channel = guild.get_channel(channel_id)
+                    if channel is None:
+                        self.starboards[guild.id][name].blacklist_channel_ids.remove(channel_id)
+                        removed_channel_count += 1
+            if starboard.whitelist_channel_ids:
+                for channel_id in starboard.whitelist_channel_ids:
+                    channel = guild.get_channel(channel_id)
+                    if channel is None:
+                        self.starboards[guild.id][name].whitelist_channel_ids.remove(channel_id)
+                        removed_channel_count += 1
+            # temp-fix end
         await self._save_starboards(guild)
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        msg = _(
+            "Removed {channel_count} channels, {role_count} roles, and {boards} boards that no longer exist"
+        ).format(
+            channel_count=removed_channel_count,
+            role_count=removed_role_count,
+            boards=boards,
+        )
+        await ctx.send(msg)
+        return
+        # temp-fix end
         msg = _(
             "Removed {channels} channels and roles, and {boards} boards " "that no longer exist"
         ).format(channels=channels, boards=boards)
@@ -388,6 +429,42 @@ class Starboard(StarboardEvents, commands.Cog):
                 )
                 return
             starboard = list(self.starboards[guild.id].values())[0]
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        starboard: StarboardEntry
+        if isinstance(channel_or_role, discord.Role):
+            role: discord.Role = channel_or_role
+            if role.id in starboard.blacklist_role_ids:
+                msg = _("{role} is already blocked for starboard {name}").format(
+                    role=role.name, name=starboard.name
+                )
+                await ctx.send(msg)
+            else:
+                self.starboards[ctx.guild.id][starboard.name].blacklist.append(channel_or_role.id)
+                self.starboards[ctx.guild.id][starboard.name].blacklist_role_ids.append(role.id)
+                await self._save_starboards(guild)
+                msg = _("{role} blocked on starboard {name}").format(
+                    role=role.name, name=starboard.name
+                )
+                await ctx.send(msg)
+        else:
+            channel: Union[discord.TextChannel, discord.CategoryChannel] = channel_or_role
+            if channel.id in starboard.blacklist_channel_ids:
+                msg = _("{channel} is already blocked for starboard {name}").format(
+                    channel=channel.name, name=starboard.name
+                )
+                await ctx.send(msg)
+            else:
+                self.starboards[ctx.guild.id][starboard.name].blacklist.append(channel_or_role.id)
+                self.starboards[ctx.guild.id][starboard.name].blacklist_channel_ids.append(
+                    channel.id
+                )
+                await self._save_starboards(guild)
+                msg = _("{channel} blocked on starboard {name}").format(
+                    channel=channel.name, name=starboard.name
+                )
+                await ctx.send(msg)
+        return
+        # temp-fix end
         if channel_or_role.id in starboard.blacklist:
             msg = _("{channel_or_role} is already blocked for starboard {name}").format(
                 channel_or_role=channel_or_role.name, name=starboard.name
@@ -429,6 +506,44 @@ class Starboard(StarboardEvents, commands.Cog):
                 )
                 return
             starboard = list(self.starboards[guild.id].values())[0]
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        starboard: StarboardEntry
+        if isinstance(channel_or_role, discord.Role):
+            role: discord.Role = channel_or_role
+            if role.id not in starboard.blacklist_role_ids:
+                msg = _("{role} is not on the blocklist for starboard {name}").format(
+                    role=role.name, name=starboard.name
+                )
+                await ctx.send(msg)
+                return
+            else:
+                self.starboards[ctx.guild.id][starboard.name].blacklist.remove(channel_or_role.id)
+                self.starboards[ctx.guild.id][starboard.name].blacklist_role_ids.remove(role.id)
+                await self._save_starboards(guild)
+                msg = _("{role} removed from the blocklist on starboard {name}").format(
+                    role=role.name, name=starboard.name
+                )
+                await ctx.send(msg)
+        else:
+            channel: Union[discord.TextChannel, discord.CategoryChannel] = channel_or_role
+            if channel.id not in starboard.blacklist_channel_ids:
+                msg = _("{channel} is not on the blocklist for starboard {name}").format(
+                    channel=channel.name, name=starboard.name
+                )
+                await ctx.send(msg)
+                return
+            else:
+                self.starboards[ctx.guild.id][starboard.name].blacklist.remove(channel_or_role.id)
+                self.starboards[ctx.guild.id][starboard.name].blacklist_channel_ids.remove(
+                    channel.id
+                )
+                await self._save_starboards(guild)
+                msg = _("{channel} removed from the blocklist on starboard {name}").format(
+                    channel=channel.name, name=starboard.name
+                )
+                await ctx.send(msg)
+        return
+        # temp-fix end
         if channel_or_role.id not in starboard.blacklist:
             msg = _("{channel_or_role} is not on the blocklist for starboard {name}").format(
                 channel_or_role=channel_or_role.name, name=starboard.name
@@ -471,6 +586,53 @@ class Starboard(StarboardEvents, commands.Cog):
                 return
             starboard = list(self.starboards[guild.id].values())[0]
 
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        starboard: StarboardEntry
+        if isinstance(channel_or_role, discord.Role):
+            role: discord.Role = channel_or_role
+            if role.id in starboard.whitelist_role_ids:
+                msg = _("{role} is already allowed for starboard {name}").format(
+                    role=role.name, name=starboard.name
+                )
+                await ctx.send(msg)
+            else:
+                self.starboards[ctx.guild.id][starboard.name].whitelist.append(channel_or_role.id)
+                self.starboards[ctx.guild.id][starboard.name].whitelist_role_ids.append(role.id)
+                await self._save_starboards(guild)
+                msg = _("{role} allowed on starboard {name}").format(
+                    role=role.name, name=starboard.name
+                )
+                await ctx.send(msg)
+        else:
+            channel: Union[discord.TextChannel, discord.CategoryChannel] = channel_or_role
+            if channel.id in starboard.whitelist_channel_ids:
+                msg = _("{channel} is already allowed for starboard {name}").format(
+                    channel=channel.name, name=starboard.name
+                )
+                await ctx.send(msg)
+            else:
+                self.starboards[ctx.guild.id][starboard.name].whitelist.append(channel_or_role.id)
+                self.starboards[ctx.guild.id][starboard.name].whitelist_channel_ids.append(
+                    channel.id
+                )
+                await self._save_starboards(guild)
+                msg = _("{channel} allowed on starboard {name}").format(
+                    channel=channel.name, name=starboard.name
+                )
+                await ctx.send(msg)
+                if isinstance(channel, discord.TextChannel):
+                    star_channel = ctx.guild.get_channel(starboard.channel)
+                    if channel.is_nsfw() and not star_channel.is_nsfw():
+                        await ctx.send(
+                            _(
+                                "The channel you have provided is designated "
+                                "as NSFW but your starboard channel is not. "
+                                "They will both need to be set the same "
+                                "in order for this to work properly."
+                            )
+                        )
+        return
+        # temp-fix end
         if channel_or_role.id in starboard.whitelist:
             msg = _("{channel_or_role} is already allowed for starboard {name}").format(
                 channel_or_role=channel_or_role.name, name=starboard.name
@@ -523,6 +685,42 @@ class Starboard(StarboardEvents, commands.Cog):
                 )
                 return
             starboard = list(self.starboards[guild.id].values())[0]
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        starboard: StarboardEntry
+        if isinstance(channel_or_role, discord.Role):
+            role: discord.Role = channel_or_role
+            if role.id not in starboard.whitelist_role_ids:
+                msg = _("{role} is not on the allowlist for starboard {name}").format(
+                    role=role.name, name=starboard.name
+                )
+                await ctx.send(msg)
+            else:
+                self.starboards[ctx.guild.id][starboard.name].whitelist.remove(channel_or_role.id)
+                self.starboards[ctx.guild.id][starboard.name].whitelist_role_ids.remove(role.id)
+                await self._save_starboards(guild)
+                msg = _("{role} removed from the allowlist on starboard {name}").format(
+                    role=role.name, name=starboard.name
+                )
+                await ctx.send(msg)
+        else:
+            channel: Union[discord.TextChannel, discord.CategoryChannel] = channel_or_role
+            if channel.id not in starboard.whitelist_channel_ids:
+                msg = _("{channel} is not on the allowlist for starboard {name}").format(
+                    channel=channel.name, name=starboard.name
+                )
+                await ctx.send(msg)
+            else:
+                self.starboards[ctx.guild.id][starboard.name].whitelist.remove(channel_or_role.id)
+                self.starboards[ctx.guild.id][starboard.name].whitelist_channel_ids.remove(
+                    channel.id
+                )
+                await self._save_starboards(guild)
+                msg = _("{channel} removed from the allowlist on starboard {name}").format(
+                    channel=channel.name, name=starboard.name
+                )
+                await ctx.send(msg)
+        return
+        # temp-fix end
         if channel_or_role.id not in starboard.whitelist:
             msg = _("{channel_or_role} is not on the allowlist for starboard {name}").format(
                 channel_or_role=channel_or_role.name, name=starboard.name
@@ -794,3 +992,372 @@ class Starboard(StarboardEvents, commands.Cog):
             threshold=threshold, name=starboard.name
         )
         await ctx.send(msg)
+
+    # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+    @blacklist.group(name="roles", aliases=["role"])
+    async def blacklist_roles(self, ctx: commands.Context) -> None:
+        """Add/Remove roles to/from the blocklist"""
+        pass
+
+    @blacklist.group(name="channels", aliases=["channel"])
+    async def blacklist_channels(self, ctx: commands.Context) -> None:
+        """Add/Remove channels to/from the blocklist"""
+        pass
+
+    @whitelist.group(name="roles", aliases=["role"])
+    async def whitelist_roles(self, ctx: commands.Context) -> None:
+        """Add/Remove roles to/from the allowlist"""
+        pass
+
+    @whitelist.group(name="channels", aliases=["channel"])
+    async def whitelist_channels(self, ctx: commands.Context) -> None:
+        """Add/Remove channels to/from the allowlist"""
+        pass
+
+    @blacklist_roles.command(name="add")
+    async def blacklist_roles_add(
+        self,
+        ctx: commands.Context,
+        starboard: Optional[StarboardExists],
+        role: discord.Role,
+    ) -> None:
+        """
+        Add a role to the starboard blocklist
+
+        `<name>` is the name of the starboard to adjust
+        `<role>` is the role you would like to add to the blocklist
+        """
+        guild = ctx.guild
+        if not starboard:
+            if guild.id not in self.starboards:
+                await ctx.send(_("There are no starboards setup on this server!"))
+                return
+            if len(self.starboards[guild.id]) > 1:
+                await ctx.send(
+                    _(
+                        "There's more than one starboard setup in this server. "
+                        "Please provide a name for the starboard you wish to use."
+                    )
+                )
+                return
+            starboard = list(self.starboards[guild.id].values())[0]
+
+        starboard: StarboardEntry
+        if role.id in starboard.blacklist_role_ids:
+            msg = _("{role} is already blocked for starboard {name}").format(
+                role=role.name, name=starboard.name
+            )
+            await ctx.send(msg)
+        else:
+            self.starboards[ctx.guild.id][starboard.name].blacklist.append(role.id)
+            self.starboards[ctx.guild.id][starboard.name].blacklist_role_ids.append(role.id)
+            await self._save_starboards(guild)
+            msg = _("{role} blocked on starboard {name}").format(
+                role=role.name, name=starboard.name
+            )
+            await ctx.send(msg)
+
+    @blacklist_channels.command(name="add")
+    async def blacklist_channels_add(
+        self,
+        ctx: commands.Context,
+        starboard: Optional[StarboardExists],
+        channel: Union[discord.TextChannel, discord.CategoryChannel],
+    ) -> None:
+        """
+        Add a channel to the starboard blocklist
+
+        `<name>` is the name of the starboard to adjust
+        `<channel>` is the channel you would like to add to the blocklist
+        """
+        guild = ctx.guild
+        if not starboard:
+            if guild.id not in self.starboards:
+                await ctx.send(_("There are no starboards setup on this server!"))
+                return
+            if len(self.starboards[guild.id]) > 1:
+                await ctx.send(
+                    _(
+                        "There's more than one starboard setup in this server. "
+                        "Please provide a name for the starboard you wish to use."
+                    )
+                )
+                return
+            starboard = list(self.starboards[guild.id].values())[0]
+
+        starboard: StarboardEntry
+        if channel.id in starboard.blacklist_channel_ids:
+            msg = _("{channel} is already blocked for starboard {name}").format(
+                channel=channel.name, name=starboard.name
+            )
+            await ctx.send(msg)
+        else:
+            self.starboards[ctx.guild.id][starboard.name].blacklist.append(channel.id)
+            self.starboards[ctx.guild.id][starboard.name].blacklist_channel_ids.append(channel.id)
+            await self._save_starboards(guild)
+            msg = _("{channel} blocked on starboard {name}").format(
+                channel=channel.name, name=starboard.name
+            )
+            await ctx.send(msg)
+
+    @blacklist_roles.command(name="remove")
+    async def blacklist_roles_remove(
+        self,
+        ctx: commands.Context,
+        starboard: Optional[StarboardExists],
+        role: discord.Role,
+    ) -> None:
+        """
+        Remove a role from the starboard blocklist
+
+        `<name>` is the name of the starboard to adjust
+        `<role>` is the role you would like to remove from the blocklist
+        """
+        guild = ctx.guild
+        if not starboard:
+            if guild.id not in self.starboards:
+                await ctx.send(_("There are no starboards setup on this server!"))
+                return
+            if len(self.starboards[guild.id]) > 1:
+                await ctx.send(
+                    _(
+                        "There's more than one starboard setup in this server. "
+                        "Please provide a name for the starboard you wish to use."
+                    )
+                )
+                return
+            starboard = list(self.starboards[guild.id].values())[0]
+
+        starboard: StarboardEntry
+        if role.id not in starboard.blacklist_role_ids:
+            msg = _("{role} is not on the blocklist for starboard {name}").format(
+                role=role.name, name=starboard.name
+            )
+            await ctx.send(msg)
+            return
+        else:
+            self.starboards[ctx.guild.id][starboard.name].blacklist.remove(role.id)
+            self.starboards[ctx.guild.id][starboard.name].blacklist_role_ids.remove(role.id)
+            await self._save_starboards(guild)
+            msg = _("{role} removed from the blocklist on starboard {name}").format(
+                role=role.name, name=starboard.name
+            )
+            await ctx.send(msg)
+
+    @blacklist_channels.command(name="remove")
+    async def blacklist_channels_remove(
+        self,
+        ctx: commands.Context,
+        starboard: Optional[StarboardExists],
+        channel: Union[discord.TextChannel, discord.CategoryChannel],
+    ) -> None:
+        """
+        Remove a channel from the starboard blocklist
+
+        `<name>` is the name of the starboard to adjust
+        `<channel>` is the channel you would like to remove from the blocklist
+        """
+        guild = ctx.guild
+        if not starboard:
+            if guild.id not in self.starboards:
+                await ctx.send(_("There are no starboards setup on this server!"))
+                return
+            if len(self.starboards[guild.id]) > 1:
+                await ctx.send(
+                    _(
+                        "There's more than one starboard setup in this server. "
+                        "Please provide a name for the starboard you wish to use."
+                    )
+                )
+                return
+            starboard = list(self.starboards[guild.id].values())[0]
+
+        starboard: StarboardEntry
+        if channel.id not in starboard.blacklist_channel_ids:
+            msg = _("{channel} is not on the blocklist for starboard {name}").format(
+                channel=channel.name, name=starboard.name
+            )
+            await ctx.send(msg)
+            return
+        else:
+            self.starboards[ctx.guild.id][starboard.name].blacklist.remove(channel.id)
+            self.starboards[ctx.guild.id][starboard.name].blacklist_channel_ids.remove(channel.id)
+            await self._save_starboards(guild)
+            msg = _("{channel} removed from the blocklist on starboard {name}").format(
+                channel=channel.name, name=starboard.name
+            )
+            await ctx.send(msg)
+
+    @whitelist_roles.command(name="add")
+    async def whitelist_roles_add(
+        self,
+        ctx: commands.Context,
+        starboard: Optional[StarboardExists],
+        role: discord.Role,
+    ) -> None:
+        """
+        Add a role to the starboard allowlist
+
+        `<name>` is the name of the starboard to adjust
+        `<role>` is the role you would like to add to the allowlist
+        """
+        guild = ctx.guild
+        if not starboard:
+            if guild.id not in self.starboards:
+                await ctx.send(_("There are no starboards setup on this server!"))
+                return
+            if len(self.starboards[guild.id]) > 1:
+                await ctx.send(
+                    _(
+                        "There's more than one starboard setup in this server. "
+                        "Please provide a name for the starboard you wish to use."
+                    )
+                )
+                return
+            starboard = list(self.starboards[guild.id].values())[0]
+
+        starboard: StarboardEntry
+        if role.id in starboard.whitelist_role_ids:
+            msg = _("{role} is already allowed for starboard {name}").format(
+                role=role.name, name=starboard.name
+            )
+            await ctx.send(msg)
+        else:
+            self.starboards[ctx.guild.id][starboard.name].whitelist.append(role.id)
+            self.starboards[ctx.guild.id][starboard.name].whitelist_role_ids.append(role.id)
+            await self._save_starboards(guild)
+            msg = _("{role} allowed on starboard {name}").format(
+                role=role.name, name=starboard.name
+            )
+            await ctx.send(msg)
+
+    @whitelist_channels.command(name="add")
+    async def whitelist_channels_add(
+        self,
+        ctx: commands.Context,
+        starboard: Optional[StarboardExists],
+        channel: Union[discord.TextChannel, discord.CategoryChannel],
+    ) -> None:
+        """
+        Add a channel to the starboard allowlist
+
+        `<name>` is the name of the starboard to adjust
+        `<channel>` is the channel you would like to add to the allowlist
+        """
+        guild = ctx.guild
+        if not starboard:
+            if guild.id not in self.starboards:
+                await ctx.send(_("There are no starboards setup on this server!"))
+                return
+            if len(self.starboards[guild.id]) > 1:
+                await ctx.send(
+                    _(
+                        "There's more than one starboard setup in this server. "
+                        "Please provide a name for the starboard you wish to use."
+                    )
+                )
+                return
+            starboard = list(self.starboards[guild.id].values())[0]
+
+        starboard: StarboardEntry
+        if channel.id in starboard.whitelist_channel_ids:
+            msg = _("{channel} is already allowed for starboard {name}").format(
+                channel=channel.name, name=starboard.name
+            )
+            await ctx.send(msg)
+        else:
+            self.starboards[ctx.guild.id][starboard.name].whitelist.append(channel.id)
+            self.starboards[ctx.guild.id][starboard.name].whitelist_channel_ids.append(channel.id)
+            await self._save_starboards(guild)
+            msg = _("{channel} allowed on starboard {name}").format(
+                channel=channel.name, name=starboard.name
+            )
+            await ctx.send(msg)
+
+    @whitelist_roles.command(name="remove")
+    async def whitelist_roles_remove(
+        self,
+        ctx: commands.Context,
+        starboard: Optional[StarboardExists],
+        role: discord.Role,
+    ) -> None:
+        """
+        Remove a role from the starboard allowlist
+
+        `<name>` is the name of the starboard to adjust
+        `<role>` is the role you would like to remove from the allowlist
+        """
+        guild = ctx.guild
+        if not starboard:
+            if guild.id not in self.starboards:
+                await ctx.send(_("There are no starboards setup on this server!"))
+                return
+            if len(self.starboards[guild.id]) > 1:
+                await ctx.send(
+                    _(
+                        "There's more than one starboard setup in this server. "
+                        "Please provide a name for the starboard you wish to use."
+                    )
+                )
+                return
+            starboard = list(self.starboards[guild.id].values())[0]
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        starboard: StarboardEntry
+        if role.id not in starboard.whitelist_role_ids:
+            msg = _("{role} is not on the allowlist for starboard {name}").format(
+                role=role.name, name=starboard.name
+            )
+            await ctx.send(msg)
+        else:
+            self.starboards[ctx.guild.id][starboard.name].whitelist.remove(role.id)
+            self.starboards[ctx.guild.id][starboard.name].whitelist_role_ids.remove(role.id)
+            await self._save_starboards(guild)
+            msg = _("{role} removed from the allowlist on starboard {name}").format(
+                role=role.name, name=starboard.name
+            )
+            await ctx.send(msg)
+
+    @whitelist_channels.command(name="remove")
+    async def whitelist_channels_remove(
+        self,
+        ctx: commands.Context,
+        starboard: Optional[StarboardExists],
+        channel: discord.Role,
+    ) -> None:
+        """
+        Remove a channel from the starboard allowlist
+
+        `<name>` is the name of the starboard to adjust
+        `<channel>` is the channel you would like to remove from the allowlist
+        """
+        guild = ctx.guild
+        if not starboard:
+            if guild.id not in self.starboards:
+                await ctx.send(_("There are no starboards setup on this server!"))
+                return
+            if len(self.starboards[guild.id]) > 1:
+                await ctx.send(
+                    _(
+                        "There's more than one starboard setup in this server. "
+                        "Please provide a name for the starboard you wish to use."
+                    )
+                )
+                return
+            starboard = list(self.starboards[guild.id].values())[0]
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        starboard: StarboardEntry
+        if channel.id not in starboard.whitelist_channel_ids:
+            msg = _("{channel} is not on the allowlist for starboard {name}").format(
+                channel=channel.name, name=starboard.name
+            )
+            await ctx.send(msg)
+        else:
+            self.starboards[ctx.guild.id][starboard.name].whitelist.remove(channel.id)
+            self.starboards[ctx.guild.id][starboard.name].whitelist_channel_ids.remove(channel.id)
+            await self._save_starboards(guild)
+            msg = _("{channel} removed from the allowlist on starboard {name}").format(
+                channel=channel.name, name=starboard.name
+            )
+            await ctx.send(msg)
+
+    # temp-fix end

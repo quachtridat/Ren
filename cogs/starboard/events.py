@@ -172,6 +172,9 @@ class StarboardEvents:
             return
         allowed = starboard.check_roles(member)
         allowed |= starboard.check_channel(self.bot, channel)
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        allowed = starboard.check_roles(member) and starboard.check_channel(self.bot, channel)
+        # temp-fix end
         if not allowed:
             log.debug("User or channel not in allowlist")
             return

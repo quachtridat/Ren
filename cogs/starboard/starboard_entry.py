@@ -46,6 +46,13 @@ class StarboardEntry:
         self.stars_added: int = kwargs.get("stars_added", 0)
         self.lock: asyncio.Lock = asyncio.Lock()
 
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        self.blacklist_role_ids: List[int] = kwargs.get("blacklist_role_ids", [])
+        self.whitelist_role_ids: List[int] = kwargs.get("whitelist_role_ids", [])
+        self.blacklist_channel_ids: List[int] = kwargs.get("blacklist_channel_ids", [])
+        self.whitelist_channel_ids: List[int] = kwargs.get("whitelist_channel_ids", [])
+        # temp-fix end
+
     def __repr__(self) -> str:
         return (
             "<Starboard guild={0.guild} name={0.name} emoji={0.emoji} "
@@ -73,6 +80,18 @@ class StarboardEntry:
             # for the starboard count
             return True
         user_roles = set([role.id for role in member.roles])
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        if self.blacklist_role_ids:
+            for role_id in self.blacklist_role_ids:
+                if role_id in user_roles:
+                    return False
+        if self.whitelist_role_ids:
+            for role_id in self.whitelist_role_ids:
+                if role_id in user_roles:
+                    return True
+            return False
+        return True
+        # temp-fix end
         if self.whitelist:
             for role in self.whitelist:
                 if role in user_roles:
@@ -109,6 +128,20 @@ class StarboardEntry:
         guild = bot.get_guild(self.guild)
         if channel.is_nsfw() and not guild.get_channel(self.channel).is_nsfw():
             return False
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        if self.blacklist_channel_ids:
+            if channel.id in self.blacklist_channel_ids:
+                return False
+            if channel.category_id and channel.category_id in self.blacklist_channel_ids:
+                return False
+        if self.whitelist_channel_ids:
+            if channel.id in self.whitelist_channel_ids:
+                return True
+            if channel.category_id and channel.category_id in self.whitelist_channel_ids:
+                return True
+            return False
+        return True
+        # temp-fix end
         if self.whitelist:
             if channel.id in self.whitelist:
                 return True
@@ -133,6 +166,12 @@ class StarboardEntry:
             "selfstar": self.selfstar,
             "blacklist": self.blacklist,
             "whitelist": self.whitelist,
+            # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+            "blacklist_role_ids": self.blacklist_role_ids,
+            "whitelist_role_ids": self.whitelist_role_ids,
+            "blacklist_channel_ids": self.blacklist_channel_ids,
+            "whitelist_channel_ids": self.whitelist_channel_ids,
+            # temp-fix end
             "messages": {
                 k: m.to_json() async for k, m in AsyncIter(self.messages.items(), steps=500)
             },
@@ -176,14 +215,28 @@ class StarboardEntry:
                 stars_added += len(message.reactions)
         blacklist = data.get("blacklist", [])
         whitelist = data.get("whitelist", [])
+        # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+        blacklist_role_ids = data.get("blacklist_role_ids", [])
+        whitelist_role_ids = data.get("whitelist_role_ids", [])
+        blacklist_channel_ids = data.get("blacklist_channel_ids", [])
+        whitelist_channel_ids = data.get("whitelist_channel_ids", [])
+        # temp-fix end
         if data.get("blacklist_channel") or data.get("blacklist_role"):
             log.debug("Converting blacklist")
             blacklist += data.get("blacklist_channel", [])
             blacklist += data.get("blacklist_role", [])
+            # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+            blacklist_channel_ids += data.get("blacklist_channel", [])
+            blacklist_role_ids += data.get("blacklist_role", [])
+            # temp-fix end
         if data.get("whitelist_channel") or data.get("whitelist_role"):
             log.debug("Converting whitelist")
             whitelist += data.get("whitelist_channel", [])
             whitelist += data.get("whitelist_role", [])
+            # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+            whitelist_channel_ids += data.get("whitelist_channel", [])
+            whitelist_role_ids += data.get("whitelist_role", [])
+            # temp-fix end
         return cls(
             name=data.get("name"),
             guild=guild,
@@ -194,6 +247,12 @@ class StarboardEntry:
             selfstar=data.get("selfstar", False),
             blacklist=blacklist,
             whitelist=whitelist,
+            # temp-fix https://github.com/TrustyJAID/Trusty-cogs/issues/269
+            blacklist_role_ids=blacklist_role_ids,
+            whitelist_role_ids=whitelist_role_ids,
+            blacklist_channel_ids=blacklist_channel_ids,
+            whitelist_channel_ids=whitelist_channel_ids,
+            # temp-fix end
             messages=messages,
             threshold=data.get("threshold"),
             autostar=data.get("autostar", False),
