@@ -112,6 +112,8 @@ class Welcome(commands.Cog):  # pylint: disable=too-many-instance-attributes
             If the message couldn't be sent
         discord.InvalidArgument
             If keyword arguments are invalid
+        ValueError
+            If the welcome channel for the specified guild is not found.
         """
 
         welcomeChannelId: int = await self.config.guild(guild).get_attr(KEY_WELCOME_CHANNEL)()
@@ -457,9 +459,9 @@ class Welcome(commands.Cog):  # pylint: disable=too-many-instance-attributes
     # [p]welcomeset greetings
     @welcome.group(name="greetings")
     async def greetings(self, ctx: Context):
-        """Server greetings message settings.
+        """Server greeting channel and greeting messages settings.
 
-        Greetings are seperated by pools.
+        Greetings are separated by pools.
         A pool can be specified as an extra argument for subcommands under this command.
         If not specified, the default pool will be used.
 
