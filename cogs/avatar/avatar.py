@@ -2,11 +2,11 @@
 from redbot.core import commands
 from redbot.core.bot import Red
 
-from .commands import AvatarCommands
-from .events import AvatarEvents
+from .commandHandlers import AvatarCommandHandlers
+from .eventHandlers import AvatarEventHandlers
 
 
-class Avatar(commands.Cog, AvatarCommands, AvatarEvents):
+class Avatar(commands.Cog, AvatarCommandHandlers, AvatarEventHandlers):
     """The Avatar collector."""
 
     def __init__(self, bot: Red):

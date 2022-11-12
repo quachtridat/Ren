@@ -5,7 +5,7 @@ from .core import AvatarCore
 
 
 class AvatarCommandsCore(AvatarCore):
-    async def _saveAvatars(self, ctx: Context, invokingCommand: Command = None):
+    async def cmdSaveAvatars(self, ctx: Context, invokingCmd: Command = None):
         """Save all avatars in the current guild."""
         async with ctx.typing():
             for member in ctx.guild.members:
