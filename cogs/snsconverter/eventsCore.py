@@ -12,7 +12,9 @@ class EventsCore(Core):
 
         if not await self.config.guild(message.guild).get_attr(KEY_ENABLED)():
             self.logger.debug(
-                "VxTwit disabled for guild %s (%s), skipping", message.guild.name, message.guild.id
+                "SNSConverter disabled for guild %s (%s), skipping",
+                message.guild.name,
+                message.guild.id,
             )
             return
 
@@ -34,7 +36,7 @@ class EventsCore(Core):
 
         if not await self.config.guild(message_after.guild).get_attr(KEY_ENABLED)():
             self.logger.debug(
-                "VxTwit disabled for guild %s (%s), skipping",
+                "SNSConverter disabled for guild %s (%s), skipping",
                 message_after.guild.name,
                 message_after.guild.id,
             )
@@ -66,7 +68,9 @@ class EventsCore(Core):
 
         if not await self.config.guild(message.guild).get_attr(KEY_ENABLED)():
             self.logger.debug(
-                "VxTwit disabled for guild %s (%s), skipping", message.guild.name, message.guild.id
+                "SNSConverter disabled for guild %s (%s), skipping",
+                message.guild.name,
+                message.guild.id,
             )
             return
 
@@ -91,7 +95,7 @@ class EventsCore(Core):
 
         if not await self.config.guild(message_after.guild).get_attr(KEY_ENABLED)():
             self.logger.debug(
-                "VxTwit disabled for guild %s (%s), skipping",
+                "SNSConverter disabled for guild %s (%s), skipping",
                 message_after.guild.name,
                 message_after.guild.id,
             )
