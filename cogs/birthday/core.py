@@ -4,6 +4,7 @@ import logging
 import os
 from random import choice
 import time
+from typing import Union
 
 import discord
 
@@ -51,12 +52,12 @@ class Core:
     def cog_unload(self):
         self.bgTask.cancel()
 
-    def getBirthdayMessage(self, user: discord.User) -> str:
+    def getBirthdayMessage(self, user: Union[discord.User, discord.ClientUser]) -> str:
         """Get the birthday message.
 
         Parameters
         ----------
-        user: discord.User
+        user: Union[discord.User, discord.ClientUser]
             The user that we want the birthday message for.
 
         Returns

@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, datetime
+from datetime import date
 from typing import Dict, Optional
 
 import discord
@@ -76,7 +76,7 @@ class CommandsCore(Core):
         self,
         ctx: Context,
         member: discord.Member,
-        birthday: Optional[datetime] = None,
+        birthday: Optional[date] = None,
     ):
         """Add a user's birthday to the list.
 
@@ -103,7 +103,7 @@ class CommandsCore(Core):
             return
 
         if not birthday:
-            birthday = datetime.today()
+            birthday = date.today()
         day = birthday.day
         month = birthday.month
 
@@ -204,7 +204,7 @@ class CommandsCore(Core):
             if not userObject:
                 continue
 
-            userBirthday = datetime(DEFAULT_YEAR, user[KEY_BDAY_MONTH], user[KEY_BDAY_DAY])
+            userBirthday = date(DEFAULT_YEAR, user[KEY_BDAY_MONTH], user[KEY_BDAY_DAY])
             text = "{0:%B} {0:%d}: {1}".format(userBirthday, userObject.name)
             display.append(text)
 
@@ -403,7 +403,7 @@ class CommandsCore(Core):
         )
         await ctx.send(replyMsg)
 
-    async def cmdSetSelfBirthday(self, ctx: Context, birthday: datetime):
+    async def cmdSetSelfBirthday(self, ctx: Context, birthday: date):
         """Set your birthday.
 
         If this function is enabled, you can set your birthday ONCE, and ONLY IF your
