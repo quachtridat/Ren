@@ -150,6 +150,15 @@ class Alias(commands.Cog):
         raise ValueError("No prefix found.")
 
     async def call_alias(self, message: discord.Message, prefix: str, alias: AliasEntry):
+        new_message = self.translate_alias_message(message, prefix, alias)
+        await self.bot.process_commands(new_message)
+
+    def translate_alias_message(self, message: discord.Message, prefix: str, alias: AliasEntry):
+        """
+        Translates a discord message using an alias
+        for a command to a discord message using the
+        alias' base command.
+        """
         new_message = copy(message)
         try:
             args = alias.get_extra_args_from_alias(message, prefix)
@@ -162,9 +171,10 @@ class Alias(commands.Cog):
 
         # noinspection PyDunderSlots
         new_message.content = "{}{} {}".format(
-            prefix, command, message.content[known_content_length:]
-        )
-        await self.bot.process_commands(new_message)
+            prefix, command, " ".join(args[trackform.max + 1 :])
+        ).strip()
+
+        return new_message
 
     async def paginate_alias_list(
         self, ctx: commands.Context, alias_list: List[AliasEntry]
