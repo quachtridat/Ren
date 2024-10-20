@@ -131,11 +131,13 @@ class SFURoads(SFUBase):
             fetchedData = self.httpRetrySession.get(camera, headers=self.headers)
             fetchedData.raise_for_status()
         except requests.exceptions.HTTPError:
-            await ctx.send(":warning: This webcam is currently unavailable!")
-            # self.logger.error(exc_info=True)
+            await ctx.send(
+                ":warning: This webcam is currently unavailable! Please try again later."
+            )
             return
-        except requests.adapters.MaxRetryError:
-            await ctx.send(":warning: Unable to retrieve webcam image. Please try again.")
+        except requests.adapters.ConnectionError:
+            await ctx.send(":warning: Unable to retrieve webcam image! Please try again later.")
+            return
 
         if not fetchedData.content:
             # Make sure we don't fetch a zero byte file
