@@ -4,11 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 
 if __name__ == "__main__":
     current_path = pathlib.Path(".")
-
-    cogs = [
-        d.name for d in current_path.iterdir()
-        if d.is_dir() and (d / "info.json").exists()
-    ]
+    cogs = [d.name for d in current_path.iterdir() if d.is_dir() and (d / "info.json").exists()]
 
     templates_path = current_path / ".github" / "workflows" / "scripts" / "templates"
     env = Environment(loader=FileSystemLoader(templates_path))
