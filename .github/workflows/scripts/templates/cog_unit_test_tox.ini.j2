@@ -9,7 +9,7 @@ deps =
 commands = pytest {posargs}
 
 {% for cog in cogs %}
-[testenv:{{ cog }}]
+[testenv:cog_{{ cog }}]
 deps =
     {[testenv]deps}
     -r "{{ cogs_dir }}/{{ cog }}/requirements.txt"

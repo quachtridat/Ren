@@ -133,4 +133,4 @@ jobs:
       - name: Run tox for cogs
         env:
           PYTEST_INI: "/tmp/cog_unit_test_pytest.ini"
-        run: tox -c "/tmp/cog_unit_test_tox.ini" -e "${{ matrix.cog }}"
+        run: tox -c "/tmp/cog_unit_test_tox.ini" -e "cog_${{ matrix.cog }}"
