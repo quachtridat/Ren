@@ -1,6 +1,0 @@
-[pytest]
-testpaths =
-{% for cog in cogs %}
-    {{ cogs_dir }}/{{ cog }}
-{% endfor %}
-python_files = test*.py

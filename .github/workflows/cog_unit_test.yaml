@@ -19,8 +19,10 @@ on:
         default: ""
 
 env:
-  COGS_PATH: "cogs"
+  COGS_PATH: "${{ github.workspace }}/cogs"
+  PYTEST_INI_PATH: ".github/workflows/scripts/configs/cog_unit_test_pytest.ini"
   RED_DISCORDBOT_BRANCH: "3.5.16"
+  TOX_INI_PATH: ".github/workflows/scripts/configs/cog_unit_test_tox.ini"
 
 jobs:
   discover:
@@ -99,7 +101,7 @@ jobs:
           path: |
             ~/.cache/pip
             .tox/${{ matrix.cog }}
-          key: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-${{ hashFiles(format('{0}/{1}/requirements.txt', env.COGS_PATH, matrix.cog)) }}"
+          key: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-${{ hashFiles(format('cogs/{0}/.requirements.txt', matrix.cog)) }}"
           restore-keys: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-"
 
       - name: Install dependencies
@@ -108,27 +110,15 @@ jobs:
       - name: Extract cog requirements
         run: |
           if [ -f "${COGS_PATH}/${{ matrix.cog }}/info.json" ]; then
-            jq -r ".requirements[]? // empty" "${COGS_PATH}/${{ matrix.cog }}/info.json" > "${COGS_PATH}/${{ matrix.cog }}/requirements.txt"
+            jq -r ".requirements[]? // empty" "${COGS_PATH}/${{ matrix.cog }}/info.json" > "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
           else
-            touch "${COGS_PATH}/${{ matrix.cog }}/requirements.txt"
+            touch "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
           fi
-
-      - name: Generate pytest.ini from template
-        run: |
-          python ".github/workflows/scripts/gen_cog_unit_test_config_ini.py" \
-            --cogs-dir "${COGS_PATH}" \
-            --template-file ".github/workflows/scripts/templates/cog_unit_test_pytest.ini.j2" \
-          > "/tmp/cog_unit_test_pytest.ini"
-
-      - name: Generate tox.ini from template
-        run: |
-          python ".github/workflows/scripts/gen_cog_unit_test_config_ini.py" \
-            --cogs-dir "${COGS_PATH}" \
-            --template-file ".github/workflows/scripts/templates/cog_unit_test_tox.ini.j2" \
-          > "/tmp/cog_unit_test_tox.ini"
 
       - name: Run tox for cogs
         env:
-          PYTEST_INI: "/tmp/cog_unit_test_pytest.ini"
+          COG_PATH: "${{ env.COGS_PATH }}/${{ matrix.cog }}"
+          COG_REQUIREMENTS_TXT: "${{ env.COGS_PATH }}/${{ matrix.cog }}/.requirements.txt"
+          PYTEST_INI: "${{ env.PYTEST_INI_PATH }}"
           RED_DISCORDBOT_BRANCH: "${{ env.RED_DISCORDBOT_BRANCH }}"
-        run: tox -c "/tmp/cog_unit_test_tox.ini" -e "cog_${{ matrix.cog }}"
+        run: tox -c "${{ env.TOX_INI_PATH }}"
