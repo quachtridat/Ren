@@ -43,7 +43,7 @@ jobs:
       - name: Split input into lines
         if: steps.handle-input.outputs.cogs_input != ''
         run: |
-          echo "${{ steps.handle-input.outputs.cogs_input }}" | tr ',' '\n' > input_cogs.txt
+          echo "${{ steps.handle-input.outputs.cogs_input }}" | tr "," "\n" > input_cogs.txt
 
       - name: Validate cog names
         if: steps.handle-input.outputs.cogs_input != ''
@@ -113,7 +113,7 @@ jobs:
       - name: Extract cog requirements
         run: |
           if [ -f "${COGS_DIR}/${{ matrix.cog }}/info.json" ]; then
-            jq -r '.requirements[]' "${COGS_DIR}/${{ matrix.cog }}/info.json" > "${COGS_DIR}/${{ matrix.cog }}/requirements.txt"
+            jq -r ".requirements[]? // empty" "${COGS_DIR}/${{ matrix.cog }}/info.json" > "${COGS_DIR}/${{ matrix.cog }}/requirements.txt"
           fi
 
       - name: Generate pytest.ini from template
