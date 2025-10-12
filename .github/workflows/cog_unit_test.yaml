@@ -47,7 +47,7 @@ jobs:
           COG_PATH: "${{ github.workspace }}/${{ env.COGS_REL_PATH }}/${{ matrix.cog }}"
         run: |
           if [ -f "${COG_PATH}/info.json" ]; then
-            jq -r ".requirements[]? // empty" "${COG_PATH}/info.json" > "${COG_PATH}/.requirements.txt"
+            jq -r ".requirements[]?" "${COG_PATH}/info.json" > "${COG_PATH}/.requirements.txt"
           else
             touch "${COG_PATH}/.requirements.txt"
           fi
