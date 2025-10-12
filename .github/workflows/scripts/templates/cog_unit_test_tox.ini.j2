@@ -5,15 +5,14 @@ skipsdist = true
 
 [testenv]
 deps =
-    -r ".red-framework/requirements/base.txt"
-    -r ".red-framework/requirements/extra-test.txt"
+    -r ".red-framework/tools/dev-requirements.txt"
 commands = pytest {posargs}
 
 {% for cog in cogs %}
 [testenv:{{ cog }}]
 deps =
     {[testenv]deps}
-    -r "{{ cog }}/requirements.txt"
-commands = pytest {{ cog }}/*/test*
+    -r "{{ cogs_dir }}/{{ cog }}/requirements.txt"
+commands = pytest -c "{env:PYTEST_INI:pytest.ini}" "cogs/{{ cog }}" {posargs}
 
 {% endfor %}
