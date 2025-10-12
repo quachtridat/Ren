@@ -20,9 +20,9 @@ on:
 
 env:
   COGS_PATH: "${{ github.workspace }}/cogs"
-  PYTEST_INI_PATH: ".github/workflows/scripts/configs/cog_unit_test_pytest.ini"
+  PYTEST_INI_PATH: ".github/workflows/configs/cog_unit_test_pytest.ini"
   RED_DISCORDBOT_BRANCH: "3.5.16"
-  TOX_INI_PATH: ".github/workflows/scripts/configs/cog_unit_test_tox.ini"
+  TOX_INI_PATH: ".github/workflows/configs/cog_unit_test_tox.ini"
 
 jobs:
   discover:
