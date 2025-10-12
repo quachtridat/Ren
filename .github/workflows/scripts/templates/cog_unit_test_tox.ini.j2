@@ -5,7 +5,7 @@ skipsdist = true
 
 [testenv]
 deps =
-    -r ".red-framework/tools/dev-requirements.txt"
+    -r "git+https://github.com/Cog-Creators/Red-DiscordBot@{env:RED_DISCORDBOT_BRANCH:V3/develop}#egg=red-discordbot[dev]"
 commands = pytest {posargs}
 
 {% for cog in cogs %}
