@@ -1,0 +1,19 @@
+[tox]
+envlist = {{ cogs | join(',') }}
+isolated_build = true
+skipsdist = true
+
+[testenv]
+deps =
+    -r ".red-framework/requirements/base.txt"
+    -r ".red-framework/requirements/extra-test.txt"
+commands = pytest {posargs}
+
+{% for cog in cogs %}
+[testenv:{{ cog }}]
+deps =
+    {[testenv]deps}
+    -r "{{ cog }}/requirements.txt"
+commands = pytest {{ cog }}/*/test*
+
+{% endfor %}
