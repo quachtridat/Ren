@@ -40,10 +40,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract cog requirements
+        run: |
+          if [ -f "${COGS_PATH}/${{ matrix.cog }}/info.json" ]; then
+            jq -r ".requirements[]? // empty" "${COGS_PATH}/${{ matrix.cog }}/info.json" > "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
+          else
+            touch "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
+          fi
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Extract Red version
+        id: extract-red-version
+        run: |
+          version=$(python "${{ github.workspace }}/setup.py" --version 2> /dev/null)
+          echo "version=${version}" >> $GITHUB_OUTPUT
 
       - name: Cache pip + tox
         uses: actions/cache@v4
@@ -57,18 +71,10 @@ jobs:
       - name: Install tox
         run: pip install "tox"
 
-      - name: Extract cog requirements
-        run: |
-          if [ -f "${COGS_PATH}/${{ matrix.cog }}/info.json" ]; then
-            jq -r ".requirements[]? // empty" "${COGS_PATH}/${{ matrix.cog }}/info.json" > "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
-          else
-            touch "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
-          fi
-
       - name: Run tox
         env:
           COG_PATH: "${{ env.COGS_PATH }}/${{ matrix.cog }}"
           COG_REQUIREMENTS_TXT: "${{ env.COGS_PATH }}/${{ matrix.cog }}/.requirements.txt"
           PYTEST_INI: "${{ github.workspace }}/.github/workflows/configs/cog_unit_test_pytest.ini"
-          RED_DISCORDBOT_BRANCH: "3.5.16"
+          RED_DISCORDBOT_BRANCH: "${{ steps.extract-red-version.outputs.version }}"
         run: tox -c "${{ github.workspace }}/.github/workflows/configs/cog_unit_test_tox.ini"
