@@ -12,11 +12,6 @@ on:
       - V3/testing
       - V3/prod
   workflow_dispatch:
-    inputs:
-      cogs:
-        description: "Comma-separated list of cogs to test (leave blank for all)"
-        required: false
-        default: ""
 
 env:
   COGS_PATH: "${{ github.workspace }}/cogs"
@@ -28,57 +23,15 @@ jobs:
   discover:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      cogs: ${{ steps.build-cog-list.outputs.cogs }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Capture workflow_dispatch input
-        id: handle-input
-        run: |
-          if [ -n "${{ github.event.inputs.cogs }}" ]; then
-            echo "cogs_input=${{ github.event.inputs.cogs }}" >> $GITHUB_OUTPUT
-          else
-            echo "cogs_input=" >> $GITHUB_OUTPUT
-          fi
-
-      - name: List available cogs
-        run: ls "${COGS_PATH}" | sed "s#/##" > all_cogs.txt
-
-      - name: Split input into lines
-        if: steps.handle-input.outputs.cogs_input != ''
-        run: |
-          echo "${{ steps.handle-input.outputs.cogs_input }}" | tr "," "\n" > input_cogs.txt
-
-      - name: Validate cog names
-        if: steps.handle-input.outputs.cogs_input != ''
-        run: |
-          invalid=$(grep -vxFf all_cogs.txt input_cogs.txt || true)
-          if [ -n "$invalid" ]; then
-            echo "Invalid cog(s): $invalid"
-            echo "Available cogs:"
-            cat all_cogs.txt
-            exit 1
-          fi
-
       - name: Build cog list
+        id: build-cog-list
         run: |
-          if [ -s input_cogs.txt ]; then
-            cp input_cogs.txt coglist.txt
-          else
-            cp all_cogs.txt coglist.txt
-          fi
-
-      - name: Convert cog list to JSON
-        run: jq -Rsc 'split("\n")[:-1]' coglist.txt > coglist.json
-
-      - name: Set matrix output
-        id: set-matrix
-        run: echo "matrix={\"cog\":$(cat coglist.json)}" >> $GITHUB_OUTPUT
-
-      - name: Print final matrix
-        run: |
-          echo "Cogs to test:"
-          cat coglist.json
+          json=$(find "${COGS_PATH}" -maxdepth 1 -type "d" -printf "%f\n" | jq -R | jq -s)
+          echo "cogs=${json}" >> $GITHUB_OUTPUT
 
   test:
     needs: discover
@@ -86,7 +39,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        cog: ${{ fromJson(needs.discover.outputs.matrix).cog }}
+        cog: ${{ fromJson(needs.discover.outputs.cogs) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -105,7 +58,7 @@ jobs:
           restore-keys: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-"
 
       - name: Install dependencies
-        run: pip install "jq" "tox"
+        run: pip install "tox"
 
       - name: Extract cog requirements
         run: |
