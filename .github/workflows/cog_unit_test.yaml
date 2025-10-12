@@ -115,6 +115,8 @@ jobs:
         run: |
           if [ -f "${COGS_DIR}/${{ matrix.cog }}/info.json" ]; then
             jq -r ".requirements[]? // empty" "${COGS_DIR}/${{ matrix.cog }}/info.json" > "${COGS_DIR}/${{ matrix.cog }}/requirements.txt"
+          else
+            touch "${COGS_DIR}/${{ matrix.cog }}/requirements.txt"
           fi
 
       - name: Generate pytest.ini from template

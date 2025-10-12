@@ -10,7 +10,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     cogs_path = pathlib.Path(args.cogs_dir)
-    cogs = [d.name for d in cogs_path.iterdir() if d.is_dir() and (d / "info.json").exists()]
+    cogs = [d.name for d in cogs_path.iterdir()]
 
     with open(args.template_file, "r") as f:
         template: Template = Template(f.read())
