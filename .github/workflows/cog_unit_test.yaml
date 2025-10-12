@@ -106,8 +106,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install "git+https://github.com/Cog-Creators/Red-DiscordBot@${{ env.RED_DISCORDBOT_BRANCH }}#egg=red-discordbot[dev]"
-          pip install "jq"
+          pip install "red-discordbot[dev] @ git+https://github.com/Cog-Creators/Red-DiscordBot@${{ env.RED_DISCORDBOT_BRANCH }}"
+          pip install "jq" "tox"
 
       - name: Extract cog requirements
         run: |
