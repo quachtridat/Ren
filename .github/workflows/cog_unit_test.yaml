@@ -130,6 +130,13 @@ jobs:
             --template-file ".github/workflows/scripts/templates/cog_unit_test_tox.ini.j2" \
           > "/tmp/cog_unit_test_tox.ini"
 
+      - name: Show generated configs
+        run: |
+          echo "Generated pytest.ini:"
+          cat /tmp/cog_unit_test_pytest.ini
+          echo "Generated tox.ini:"
+          cat /tmp/cog_unit_test_tox.ini
+
       - name: Run tox for cogs
         env:
           PYTEST_INI: "/tmp/cog_unit_test_pytest.ini"
