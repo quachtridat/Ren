@@ -67,7 +67,8 @@ jobs:
       - name: Convert cog list to JSON
         run: jq -Rsc 'split("\n")[:-1]' coglist.txt > coglist.json
 
-      - id: set-matrix
+      - name: Set matrix output
+        id: set-matrix
         run: echo "matrix={\"cog\":$(cat coglist.json)}" >> $GITHUB_OUTPUT
 
       - name: Echo final matrix
