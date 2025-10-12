@@ -1,4 +1,4 @@
-name: CI
+name: Cog Unit Tests
 
 on:
   push:
@@ -105,9 +105,7 @@ jobs:
           restore-keys: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-"
 
       - name: Install dependencies
-        run: |
-          pip install "red-discordbot[test] @ git+https://github.com/Cog-Creators/Red-DiscordBot@${{ env.RED_DISCORDBOT_BRANCH }}"
-          pip install "jq" "tox"
+        run: pip install "jq" "tox"
 
       - name: Extract cog requirements
         run: |
@@ -117,7 +115,7 @@ jobs:
             touch "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
           fi
 
-      - name: Run tox for cogs
+      - name: Run tox
         env:
           COG_PATH: "${{ env.COGS_PATH }}/${{ matrix.cog }}"
           COG_REQUIREMENTS_TXT: "${{ env.COGS_PATH }}/${{ matrix.cog }}/.requirements.txt"
