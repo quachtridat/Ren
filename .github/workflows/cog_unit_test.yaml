@@ -30,7 +30,7 @@ jobs:
       - name: Build cog list
         id: build-cog-list
         run: |
-          json=$(find "${COGS_PATH}" -maxdepth 1 -type "d" -printf "%f\n" | jq -R | jq -s)
+          json=$(find "${COGS_PATH}" -maxdepth 1 -type "d" -printf "%f\n" | jq -R | jq -sc)
           echo "cogs=${json}" >> $GITHUB_OUTPUT
 
   test:
@@ -57,7 +57,7 @@ jobs:
           key: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-${{ hashFiles(format('cogs/{0}/.requirements.txt', matrix.cog)) }}"
           restore-keys: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-"
 
-      - name: Install dependencies
+      - name: Install tox
         run: pip install "tox"
 
       - name: Extract cog requirements
