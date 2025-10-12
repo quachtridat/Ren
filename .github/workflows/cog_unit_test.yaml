@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 env:
-  COGS_PATH: "${{ github.workspace }}/cogs"
+  COGS_REL_PATH: "cogs"
 
 jobs:
   discover:
@@ -26,6 +26,8 @@ jobs:
 
       - name: Build cog list
         id: build-cog-list
+        env:
+          COGS_PATH: "${{ github.workspace }}/${{ env.COGS_REL_PATH }}"
         run: |
           json=$(find "${COGS_PATH}" -mindepth 1 -maxdepth 1 -type "d" -printf "%f\n" | jq -R | jq -sc)
           echo "cogs=${json}" >> $GITHUB_OUTPUT
@@ -41,11 +43,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Extract cog requirements
+        env:
+          COG_PATH: "${{ github.workspace }}/${{ env.COGS_REL_PATH }}/${{ matrix.cog }}"
         run: |
-          if [ -f "${COGS_PATH}/${{ matrix.cog }}/info.json" ]; then
-            jq -r ".requirements[]? // empty" "${COGS_PATH}/${{ matrix.cog }}/info.json" > "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
+          if [ -f "${COG_PATH}/info.json" ]; then
+            jq -r ".requirements[]? // empty" "${COG_PATH}/info.json" > "${COG_PATH}/.requirements.txt"
           else
-            touch "${COGS_PATH}/${{ matrix.cog }}/.requirements.txt"
+            touch "${COG_PATH}/.requirements.txt"
           fi
 
       - name: Set up Python
@@ -65,7 +69,7 @@ jobs:
           path: |
             ~/.cache/pip
             .tox/${{ matrix.cog }}
-          key: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-${{ hashFiles(format('cogs/{0}/.requirements.txt', matrix.cog)) }}"
+          key: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-${{ hashFiles(format('{0}/{1}/.requirements.txt', env.COGS_REL_PATH, matrix.cog)) }}"
           restore-keys: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-"
 
       - name: Install tox
@@ -73,8 +77,8 @@ jobs:
 
       - name: Run tox
         env:
-          COG_PATH: "${{ env.COGS_PATH }}/${{ matrix.cog }}"
-          COG_REQUIREMENTS_TXT: "${{ env.COGS_PATH }}/${{ matrix.cog }}/.requirements.txt"
+          COG_PATH: "${{ github.workspace }}/${{ env.COGS_REL_PATH }}/${{ matrix.cog }}"
+          COG_REQUIREMENTS_TXT: "${{ github.workspace }}/${{ env.COGS_REL_PATH }}/${{ matrix.cog }}/.requirements.txt"
           PYTEST_INI: "${{ github.workspace }}/.github/workflows/configs/cog_unit_test_pytest.ini"
           RED_DISCORDBOT_BRANCH: "${{ steps.extract-red-version.outputs.version }}"
         run: tox -c "${{ github.workspace }}/.github/workflows/configs/cog_unit_test_tox.ini"
