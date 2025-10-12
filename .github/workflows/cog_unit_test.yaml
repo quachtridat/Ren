@@ -27,7 +27,7 @@ jobs:
       - name: Build cog list
         id: build-cog-list
         run: |
-          json=$(find "${COGS_PATH}" -maxdepth 1 -type "d" -printf "%f\n" | jq -R | jq -sc)
+          json=$(find "${COGS_PATH}" -mindepth 1 -maxdepth 1 -type "d" -printf "%f\n" | jq -R | jq -sc)
           echo "cogs=${json}" >> $GITHUB_OUTPUT
 
   test:
