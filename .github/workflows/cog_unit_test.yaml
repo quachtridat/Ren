@@ -75,7 +75,7 @@ jobs:
         id: set-matrix
         run: echo "matrix={\"cog\":$(cat coglist.json)}" >> $GITHUB_OUTPUT
 
-      - name: Echo final matrix
+      - name: Print final matrix
         run: |
           echo "Cogs to test:"
           cat coglist.json
@@ -105,7 +105,9 @@ jobs:
           restore-keys: "${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.cog }}-"
 
       - name: Install dependencies
-        run: pip install jinja2 jq tox
+        run: |
+          pip install "git+https://github.com/Cog-Creators/Red-DiscordBot@${{ env.RED_DISCORDBOT_BRANCH }}#egg=red-discordbot[dev]"
+          pip install "jq"
 
       - name: Extract cog requirements
         run: |
