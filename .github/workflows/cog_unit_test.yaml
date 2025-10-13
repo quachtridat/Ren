@@ -57,7 +57,7 @@ jobs:
           COGS_PATH: "${{ github.workspace }}/${{ env.COGS_REL_PATH }}"
           OUTPUT_FILE: "/tmp/cog_unit_test_collect.json"
           PYTEST_INI: "${{ github.workspace }}/.github/workflows/configs/cog_unit_test_pytest.ini"
-          SCRIPT_PATH: "${{ github.workspace }}/.github/workflows/scripts/collect_testful_cogs.py"
+          SCRIPT_PY: "${{ github.workspace }}/.github/workflows/scripts/collect_testful_cogs.py"
         run: |
           tox run -c "${{ github.workspace }}/.github/workflows/configs/cog_unit_test_tox.ini" -e "collect"
           echo "cogs=$(jq -c '.' '/tmp/cog_unit_test_collect.json')" >> $GITHUB_OUTPUT
