@@ -48,11 +48,8 @@ class Core:
         self.bgTask = self.bot.loop.create_task(self.birthdayLoop())
 
     # Cancel the background task on cog unload.
-    def __unload(self):  # pylint: disable=invalid-name
-        self.bgTask.cancel()
-
     def cog_unload(self):
-        self.__unload()
+        self.bgTask.cancel()
 
     def getBirthdayMessage(self, user: discord.User) -> str:
         """Get the birthday message.
